@@ -18,6 +18,12 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
+REM Install dependencies if node_modules doesn't exist
+if not exist "node_modules" (
+    echo Installing dependencies...
+    call npm run install:all
+)
+
 REM Build and start the application
 docker-compose up --build
 
