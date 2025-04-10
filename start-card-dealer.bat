@@ -2,6 +2,9 @@
 echo Starting Card Dealer Application...
 echo This may take a few minutes the first time...
 
+REM Navigate to the script's directory
+cd /d "%~dp0"
+
 REM Check if Docker is installed
 where docker >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
