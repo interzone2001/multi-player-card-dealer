@@ -2,7 +2,7 @@ import React from 'react';
 import { Paper, Typography, Box } from '@mui/material';
 import Card from './Card';
 
-const PlayerHand = ({ playerNumber, cards }) => {
+const PlayerHand = ({ playerNumber, playerName, cards }) => {
   return (
     <Paper
       elevation={2}
@@ -12,7 +12,7 @@ const PlayerHand = ({ playerNumber, cards }) => {
       }}
     >
       <Typography variant="h6" gutterBottom>
-        Player {playerNumber}
+        {playerName ? playerName : `Player ${playerNumber}`}
       </Typography>
       <Box
         sx={{

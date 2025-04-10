@@ -18,6 +18,11 @@ const calculateRequiredDecks = (numPlayers, cardsPerPlayer) => {
   return Math.ceil(totalCardsNeeded / 52);
 };
 
+const calculateRequiredDecksForCustomPlayers = (players) => {
+  const totalCardsNeeded = players.reduce((sum, player) => sum + player.number_cards, 0);
+  return Math.ceil(totalCardsNeeded / 52);
+};
+
 const shuffleDeck = (deck) => {
   for (let i = deck.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -60,6 +65,9 @@ app.post('/api/deal', (req, res) => {
     allCards = [...allCards, ...shuffleDeck(createDeck())];
   }
   
+  // Shuffle all cards together again for better randomization
+  allCards = shuffleDeck(allCards);
+  
   // Deal cards to players
   const dealtCards = [];
   for (let i = 0; i < numPlayers; i++) {
@@ -70,6 +78,59 @@ app.post('/api/deal', (req, res) => {
     numDecks,
     dealtCards,
     remainingCards: allCards.slice(numPlayers * cardsPerPlayer)
+  });
+});
+
+// Custom player data dealing
+app.post('/api/deal-custom', (req, res) => {
+  const { players } = req.body;
+  
+  if (!players || !Array.isArray(players) || players.length === 0) {
+    return res.status(400).json({ error: 'Invalid player data. Please provide a valid array of players.' });
+  }
+  
+  if (players.length > 60) {
+    return res.status(400).json({ error: 'Maximum number of players exceeded. Please limit to 60 players.' });
+  }
+  
+  // Validate each player has valid number_cards
+  const invalidPlayers = players.filter(player => 
+    !player.number_cards || 
+    player.number_cards <= 0 || 
+    player.number_cards > 18
+  );
+  
+  if (invalidPlayers.length > 0) {
+    return res.status(400).json({ 
+      error: 'Some players have invalid number of cards. Each player must have between 1 and 18 cards.' 
+    });
+  }
+  
+  const numDecks = calculateRequiredDecksForCustomPlayers(players);
+  let allCards = [];
+  
+  // Create and shuffle all required decks
+  for (let i = 0; i < numDecks; i++) {
+    allCards = [...allCards, ...shuffleDeck(createDeck())];
+  }
+  
+  // Shuffle all cards together again for better randomization
+  allCards = shuffleDeck(allCards);
+  
+  // Deal cards to players based on their requested amount
+  const dealtCards = [];
+  let cardIndex = 0;
+  
+  for (const player of players) {
+    const playerCards = allCards.slice(cardIndex, cardIndex + player.number_cards);
+    dealtCards.push(playerCards);
+    cardIndex += player.number_cards;
+  }
+  
+  res.json({
+    numDecks,
+    dealtCards,
+    remainingCards: allCards.slice(cardIndex)
   });
 });
 
