@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Container,
   Box,
@@ -11,6 +11,8 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import Card from './components/Card';
 import PlayerHand from './components/PlayerHand';
 
@@ -21,6 +23,7 @@ function App() {
   const [numDecks, setNumDecks] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const cardsRef = useRef(null);
 
   const handleDeal = async () => {
     try {
@@ -49,6 +52,74 @@ function App() {
     );
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Dealt Cards');
     XLSX.writeFile(workbook, 'dealt_cards.xlsx');
+  };
+
+  const handleExportPDF = async () => {
+    if (!cardsRef.current || dealtCards.length === 0) return;
+    
+    try {
+      setLoading(true);
+      
+      // Create a new jsPDF instance
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Add title
+      pdf.setFontSize(16);
+      pdf.text('Card Dealing Results', pdfWidth / 2, 10, { align: 'center' });
+      pdf.setFontSize(12);
+      pdf.text(`${numPlayers} Players, ${cardsPerPlayer} Cards Each, ${numDecks} Decks Used`, pdfWidth / 2, 18, { align: 'center' });
+      
+      // Capture the cards display
+      const canvas = await html2canvas(cardsRef.current, { 
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Calculate image dimensions to fit on the PDF
+      const imgWidth = pdfWidth - 20; // Margins
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let position = 25; // Start position after the title
+      
+      // Add the image
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      
+      // Check if we need additional pages
+      if (position + imgHeight > pdfHeight) {
+        let heightLeft = imgHeight;
+        let currentPosition = position;
+        
+        while (heightLeft > 0) {
+          pdf.addPage();
+          const pageUsableHeight = pdfHeight - 20; // Margins
+          
+          pdf.addImage(
+            imgData, 
+            'PNG', 
+            10, 
+            10 - currentPosition, 
+            imgWidth, 
+            imgHeight
+          );
+          
+          heightLeft -= pageUsableHeight;
+          currentPosition += pageUsableHeight;
+        }
+      }
+      
+      // Save the PDF
+      pdf.save('card_dealing_results.pdf');
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      setError('Error generating PDF. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -93,9 +164,17 @@ function App() {
                 <Button
                   variant="outlined"
                   onClick={handleExport}
-                  disabled={dealtCards.length === 0}
+                  disabled={dealtCards.length === 0 || loading}
                 >
                   Export to Excel
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={handleExportPDF}
+                  disabled={dealtCards.length === 0 || loading}
+                >
+                  Export to PDF
                 </Button>
               </Box>
             </Grid>
@@ -114,16 +193,18 @@ function App() {
           </Typography>
         )}
 
-        <Grid container spacing={3}>
-          {dealtCards.map((cards, playerIndex) => (
-            <Grid item xs={12} sm={6} md={4} key={playerIndex}>
-              <PlayerHand
-                playerNumber={playerIndex + 1}
-                cards={cards}
-              />
-            </Grid>
-          ))}
-        </Grid>
+        <Box ref={cardsRef}>
+          <Grid container spacing={3}>
+            {dealtCards.map((cards, playerIndex) => (
+              <Grid item xs={12} sm={6} md={4} key={playerIndex}>
+                <PlayerHand
+                  playerNumber={playerIndex + 1}
+                  cards={cards}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
       </Box>
     </Container>
   );
