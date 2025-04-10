@@ -1,6 +1,6 @@
 # Multi-Player Card Dealer
 
-A simple web application for dealing cards to multiple players (up to 60) with a beautiful visual interface and Excel export functionality.
+A simple web application for dealing cards to multiple players (up to 60) with a beautiful visual interface and Excel/PDF export functionality.
 
 ## Quick Start (Windows)
 
@@ -18,17 +18,42 @@ A simple web application for dealing cards to multiple players (up to 60) with a
 
 - Deal cards to up to 60 players
 - Specify number of cards per player (up to 18)
+- Import player data from Excel files
 - Automatic deck calculation
 - Visual card display with suit symbols
 - Excel export functionality
+- PDF export of card visuals
 - Responsive design
 
 ## How to Use
 
+### Standard Dealing
+
 1. Enter the number of players (1-60)
 2. Specify the number of cards per player (1-18)
 3. Click "Deal Cards" to distribute the cards
-4. Use "Export to Excel" to save the distribution
+4. Use "Export to Excel" to save the distribution as a spreadsheet
+5. Use "Export to PDF" to save the visual card layout
+
+### Importing Player Data
+
+1. Prepare an Excel file (.xlsx or .xls) with the following columns:
+   - `player_name`: The name of each player
+   - `number_cards`: The number of cards to deal to each player (1-18)
+
+2. Click "Import Player Data" and select your Excel file
+3. Review the imported data in the preview table
+4. Click "Deal Cards" to distribute cards based on the imported player data
+5. Cards will be displayed with the player names from your Excel file
+6. Export the results to Excel or PDF as needed
+
+#### Example Excel Format
+
+| player_name | number_cards |
+|-------------|--------------|
+| John        | 5            |
+| Mary        | 7            |
+| Bob         | 3            |
 
 ## Troubleshooting
 
